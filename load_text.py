@@ -17,10 +17,6 @@ x_text, y = data_helpers.load_data_and_labels(positive_data_file, negative_data_
 
 all_labeled_data = tf.data.Dataset.from_tensor_slices((x_text, y))
 
-BUFFER_SIZE = 50000
-
-all_labeled_data = all_labeled_data.shuffle(buffer_size=BUFFER_SIZE)
-
 # Build vocabulary
 
 tokenizer = tfds.features.text.Tokenizer()
@@ -64,14 +60,22 @@ for text, label in all_encoded_data.as_numpy_iterator():
 
 BATCH_SIZE = 64
 TAKE_SIZE = 2000
+BUFFER_SIZE = 50000
 
-train_data = all_encoded_data.skip(TAKE_SIZE).shuffle(BUFFER_SIZE)
-train_data = train_data.padded_batch(batch_size=BATCH_SIZE, padded_shapes=([sentences_max_len], [2]))
+all_encoded_data = all_encoded_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
+
+train_data = all_encoded_data.skip(TAKE_SIZE)
+train_data = train_data.padded_batch(batch_size=64, padded_shapes=([sentences_max_len], [2]))
 
 test_data = all_encoded_data.take(TAKE_SIZE)
-test_data = test_data.padded_batch(batch_size=BATCH_SIZE, padded_shapes=([sentences_max_len], [2]))
+test_data = test_data.padded_batch(batch_size=64, padded_shapes=([sentences_max_len], [2]))
 
-# for elements in test_data.as_numpy_iterator():
-#     print(elements)
+# for elements1 in test_data.as_numpy_iterator():
+#     for elements2 in train_data.as_numpy_iterator():
+#         if len(elements1[0]) != len(elements2[0]):
+#             continue
+#         if all(elements1[0] == elements2[0]) and all(elements1[1] == elements2[1]):
+#             print(elements1[0], elements2[0], sep = "\n")
+#             print("\n" "\n")
 
 vocab_size += 1
