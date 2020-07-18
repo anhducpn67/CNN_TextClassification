@@ -30,7 +30,6 @@ model.compile(optimizer='adam',
 train_data = load_text.train_data
 test_data = load_text.test_data
 
-print("FD")
 
 model.fit(train_data, epochs=2, verbose=1)
 test_loss, test_acc = model.evaluate(test_data, verbose=2)
