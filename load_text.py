@@ -1,12 +1,11 @@
 import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 import tensorflow as tf
-
 import tensorflow_datasets as tfds
-
 import data_helpers
+import pickle
+import numpy as np
 
 # Load and preprecess data
 
@@ -33,7 +32,6 @@ vocab_size = len(vocabulary_set)
 
 encoder = tfds.features.text.TokenTextEncoder(vocabulary_set)
 
-
 def do_encode(text, label):
     encoded_text = encoder.encode(str(text))
     return encoded_text[3:-3], label
@@ -59,23 +57,25 @@ for text, label in all_encoded_data.as_numpy_iterator():
 # Split to train data and test data
 
 BATCH_SIZE = 64
-TAKE_SIZE = 2000
 BUFFER_SIZE = 50000
 
 all_encoded_data = all_encoded_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
 
-train_data = all_encoded_data.skip(TAKE_SIZE)
+train_data = all_encoded_data.skip(2000)
+test_data = all_encoded_data.take(2000)
+val_data = test_data.skip(1000)
+test_data = test_data.take(1000)
+
 train_data = train_data.padded_batch(batch_size=64, padded_shapes=([sentences_max_len], [2]))
-
-test_data = all_encoded_data.take(TAKE_SIZE)
 test_data = test_data.padded_batch(batch_size=64, padded_shapes=([sentences_max_len], [2]))
-
-# for elements1 in test_data.as_numpy_iterator():
-#     for elements2 in train_data.as_numpy_iterator():
-#         if len(elements1[0]) != len(elements2[0]):
-#             continue
-#         if all(elements1[0] == elements2[0]) and all(elements1[1] == elements2[1]):
-#             print(elements1[0], elements2[0], sep = "\n")
-#             print("\n" "\n")
+val_data = val_data.padded_batch(batch_size=64, padded_shapes=([sentences_max_len], [2]))
 
 vocab_size += 1
+
+with open('dict.pickle', 'rb') as handle:
+    dict_word2vec = pickle.load(handle)
+
+embedding_matrix = np.zeros((vocab_size, 300))
+
+for index in range(0, vocab_size):
+    embedding_matrix[index] = dict_word2vec[index]
