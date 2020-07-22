@@ -15,14 +15,21 @@ embedding_matrix = load_text.embedding_matrix
 embedding_matrix = tf.keras.initializers.Constant(embedding_matrix)
 
 inputs = keras.Input(shape=(54,), name="input_text")
-embedding_layer = layers.Embedding(vocab_size, 300, embeddings_initializer=embedding_matrix, name="embedding",
-                                   trainable=True)(inputs)
-conv_3_layer = layers.Conv1D(100, 3, activation='relu', name="filter_size_3")(embedding_layer)
-conv_4_layer = layers.Conv1D(100, 4, activation='relu', name="filter_size_4")(embedding_layer)
-conv_5_layer = layers.Conv1D(100, 5, activation='relu', name="filter_size_5")(embedding_layer)
-max_pool_3_layer = layers.MaxPool1D(pool_size=52, name="max_pool_3")(conv_3_layer)
-max_pool_4_layer = layers.MaxPool1D(pool_size=51, name="max_pool_4")(conv_4_layer)
-max_pool_5_layer = layers.MaxPool1D(pool_size=50, name="max_pool_5")(conv_5_layer)
+embedding_layer_static = layers.Embedding(vocab_size, 300, embeddings_initializer=embedding_matrix,
+                                          name="embedding_static",
+                                          trainable=False)(inputs)
+embedding_layer_non_static = layers.Embedding(vocab_size, 300, embeddings_initializer=embedding_matrix,
+                                              name="embedding_non_static",
+                                              trainable=True)(inputs)
+reshape_static = layers.Reshape((54, 300, 1))(embedding_layer_static)
+reshape_non_static = layers.Reshape((54, 300, 1))(embedding_layer_non_static)
+embedding_layer = layers.concatenate([reshape_static, reshape_non_static], axis=3)
+conv_3_layer = layers.Conv2D(100, (3, 300), activation='relu', name="filter_size_3")(embedding_layer)
+conv_4_layer = layers.Conv2D(100, (4, 300), activation='relu', name="filter_size_4")(embedding_layer)
+conv_5_layer = layers.Conv2D(100, (5, 300), activation='relu', name="filter_size_5")(embedding_layer)
+max_pool_3_layer = layers.MaxPool2D(pool_size=(52, 1), name="max_pool_3")(conv_3_layer)
+max_pool_4_layer = layers.MaxPool2D(pool_size=(51, 1), name="max_pool_4")(conv_4_layer)
+max_pool_5_layer = layers.MaxPool2D(pool_size=(50, 1), name="max_pool_5")(conv_5_layer)
 flatten_3_layer = layers.Flatten()(max_pool_3_layer)
 flatten_4_layer = layers.Flatten()(max_pool_4_layer)
 flatten_5_layer = layers.Flatten()(max_pool_5_layer)

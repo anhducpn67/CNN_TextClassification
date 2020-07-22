@@ -24,6 +24,11 @@ all_labeled_data = tf.data.Dataset.from_tensor_slices((x_text, y))
 # for text_tensor, _ in all_labeled_data:
 #     some_tokens = tokenizer.tokenize(text_tensor.numpy())
 #     vocabulary_set.update(some_tokens)
+#
+# vocabulary_set = list(vocabulary_set)
+#
+# with open('vocab.pickle', 'wb') as handle:
+#    pickle.dump(vocabulary_set, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 with open('vocab.pickle', 'rb') as handle:
     vocabulary_set = pickle.load(handle)
@@ -55,13 +60,13 @@ for text, label in all_encoded_data.as_numpy_iterator():
 
 # Split to train data and test data
 
-BATCH_SIZE = 50
+BATCH_SIZE = 64
 BUFFER_SIZE = 50000
 
 all_encoded_data = all_encoded_data.shuffle(BUFFER_SIZE, reshuffle_each_iteration=False)
 
-train_data = all_encoded_data.skip(3000)
-test_data = all_encoded_data.take(3000)
+train_data = all_encoded_data.skip(2000)
+test_data = all_encoded_data.take(2000)
 val_data = test_data.skip(1000)
 test_data = test_data.take(1000)
 
