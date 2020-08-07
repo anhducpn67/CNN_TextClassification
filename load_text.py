@@ -1,4 +1,5 @@
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -8,12 +9,16 @@ import numpy as np
 
 # Load and preprecess data
 
-negative_data_file = 'C:/Users/AnhDuc/Desktop/Study/LabAIDANTE/TensorFlow/data/rt-polaritydata/rt-polarity.neg'
-positive_data_file = 'C:/Users/AnhDuc/Desktop/Study/LabAIDANTE/TensorFlow/data/rt-polaritydata/rt-polarity.pos'
+negative_data_file = '//data/rt-polaritydata/rt' \
+                     '-polarity.neg '
+positive_data_file = '//data/rt-polaritydata/rt' \
+                     '-polarity.pos '
+predict_data_file = '//data/rt-polaritydata/predict.txt'
 
 x_text, y = data_helpers.load_data_and_labels(positive_data_file, negative_data_file)
-
 all_labeled_data = tf.data.Dataset.from_tensor_slices((x_text, y))
+
+predict_data = data_helpers.load_predict_data(predict_data_file)
 
 # Build vocabulary
 
@@ -39,9 +44,11 @@ vocab_size = len(vocabulary_set)
 
 encoder = tfds.features.text.TokenTextEncoder(vocabulary_set)
 
+
 def do_encode(text, label):
     encoded_text = encoder.encode(str(text))
     return encoded_text[3:-3], label
+
 
 def encode_map_fn(text, label):
     # py_func doesn't set the shape of the returned tensors.
@@ -51,12 +58,19 @@ def encode_map_fn(text, label):
 
     return encoded_text, label
 
+
 all_encoded_data = all_labeled_data.map(encode_map_fn)
+predict_data = [encoder.encode(s) for s in predict_data]
 
 sentences_max_len = 0
-
 for text, label in all_encoded_data.as_numpy_iterator():
     sentences_max_len = max(sentences_max_len, len(text))
+
+for idx in range(len(predict_data)):
+    while len(predict_data[idx]) < sentences_max_len:
+        predict_data[idx].append(0)
+
+predict_data = tf.data.Dataset.from_tensor_slices(predict_data)
 
 # Split to train data and test data
 
